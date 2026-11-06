@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Oche Darts</title>
+<meta name="description" content="3D pub darts with friends: 501, 301 and Cricket. Live or turn-based, no sign-in.">
+<meta property="og:title" content="🎯 Darts? You're up!">
+<meta property="og:description" content="3D pub darts: 501, 301 and Cricket. Play live or take your turn later. No sign-in needed.">
+<meta property="og:image" content="https://john-gustin.github.io/darts/og.png">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23111'/%3E%3Ccircle cx='32' cy='32' r='22' fill='%23f1e3c4'/%3E%3Ccircle cx='32' cy='32' r='14' fill='%23c8102e'/%3E%3Ccircle cx='32' cy='32' r='6' fill='%230b8a3c'/%3E%3C/svg%3E">
+<script src="lib/mqtt.min.js"></script>
+<style>
+:root{--panel:rgba(14,16,20,.86);--line:rgba(255,255,255,.13);--text:#f1efe9;--muted:#a9a59b;--gold:#f0bf4c;--green:#3ccf7a;--red:#ff6b5e;
+  --c0:#4fa3ff;--c1:#ff8f3d;--c2:#43d17a;--c3:#d36bff}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#120d09;color:var(--text);font:14px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:rgba(255,255,255,.08);color:var(--text);border-radius:8px;padding:6px 12px}
+button:hover:not(:disabled){background:rgba(255,255,255,.16)}
+button:disabled{opacity:.4;cursor:not-allowed}
+button.primary{background:var(--gold);color:#1f1603;border-color:var(--gold);font-weight:700}
+input[type=text],select{font:inherit;background:#0c0e11;color:var(--text);border:1px solid #3a3f46;border-radius:8px;padding:8px 11px;width:100%}
+#view{position:fixed;inset:0;width:100vw;height:100vh;display:block;cursor:none}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;backdrop-filter:blur(6px)}
+[hidden]{display:none!important}
+#hud>*{position:fixed}
+#info{top:12px;left:12px;padding:10px 14px;min-width:240px}
+#info .t{font-size:18px;font-weight:800}
+#info .s{font-size:12px;color:var(--muted)}
+#info .row{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+#info .row button{font-size:12px;padding:4px 9px}
+#score{top:12px;right:12px;padding:10px 12px;min-width:260px;max-width:340px}
+.pl{display:grid;grid-template-columns:12px 1fr auto;gap:2px 8px;align-items:center;padding:7px 8px;border-radius:10px;border:2px solid transparent;margin-bottom:6px;background:rgba(255,255,255,.04)}
+.pl.up{border-color:var(--gold);background:rgba(240,191,76,.08)}
+.pl .dot{width:12px;height:12px;border-radius:50%}
+.pl .nm{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pl .big{font-size:28px;font-weight:900;text-align:right;font-variant-numeric:tabular-nums;line-height:1}
+.pl .sub{grid-column:2 / span 2;font-size:11.5px;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+.legs{display:inline-flex;gap:3px;margin-left:6px;vertical-align:middle}
+.legs i{width:8px;height:8px;border-radius:50%;border:1px solid var(--gold);display:inline-block}
+.legs i.w{background:var(--gold)}
+table.cr{border-collapse:collapse;width:100%;font-size:14px;text-align:center}
+table.cr th,table.cr td{padding:3px 4px;border-bottom:1px solid rgba(255,255,255,.07)}
+table.cr td.tg{font-weight:800;color:var(--gold);width:34px}
+table.cr td.mk{font-size:17px;font-weight:700}
+table.cr td.dead{opacity:.35;text-decoration:line-through}
+table.cr th{font-size:12px;font-weight:700}
+table.cr th.up{color:var(--gold)}
+#visit{left:50%;bottom:14px;transform:translateX(-50%);padding:10px 16px;display:flex;gap:16px;align-items:center}
+.slot{width:68px;height:52px;border-radius:9px;background:rgba(255,255,255,.06);display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid var(--line)}
+.slot b{font-size:18px}
+.slot span{font-size:11px;color:var(--muted)}
+.slot.miss b{color:var(--muted)}
+#vstat{min-width:200px}
+#vstat .a{font-size:15px;font-weight:800}
+#vstat .b{font-size:12.5px;color:var(--muted)}
+#co{color:var(--gold);font-weight:700}
+#modeBtn{font-size:12px}
+#meterBox{left:50%;bottom:96px;transform:translateX(-50%);padding:8px 12px;display:flex;flex-direction:column;align-items:center;gap:4px}
+#meterBox canvas{display:block}
+#cross{position:fixed;width:34px;height:34px;margin:-17px 0 0 -17px;pointer-events:none;z-index:3}
+#flickMsg{left:50%;top:18%;transform:translateX(-50%);font-weight:800;font-size:18px;text-shadow:0 2px 8px #000;pointer-events:none;opacity:0;transition:opacity .3s}
+#flickMsg.show{opacity:1}
+#banner{left:50%;top:40%;transform:translate(-50%,-50%);font-size:64px;font-weight:900;text-shadow:0 6px 24px rgba(0,0,0,.8);pointer-events:none;opacity:0;transition:opacity .35s;text-align:center;white-space:nowrap}
+#banner small{display:block;font-size:20px;font-weight:600}
+#banner.show{opacity:1}
+#waitBar{left:50%;top:12px;transform:translateX(-50%);padding:7px 14px;font-weight:600;display:flex;gap:10px;align-items:center}
+#chat{left:12px;bottom:12px;width:300px;display:flex;flex-direction:column}
+#chatHead{display:flex;justify-content:space-between;padding:6px 10px;cursor:pointer;font-weight:700;font-size:13px}
+#chatBody{border-top:1px solid var(--line)}
+#chat.closed #chatBody{display:none}
+#chatLog{height:170px;overflow:auto;padding:6px 10px;font-size:12.5px;display:flex;flex-direction:column;gap:3px}
+#chatLog .sys{color:var(--muted)}
+#chatForm{display:flex;gap:6px;padding:6px}
+#chatForm input{padding:6px 9px;font-size:13px}
+#unread{background:var(--red);color:#fff;border-radius:999px;padding:0 7px;font-size:11px;display:none}
+#netBadge{left:12px;bottom:236px;font-size:11px;color:var(--muted);background:var(--panel);padding:3px 9px;border-radius:999px;border:1px solid var(--line)}
+#chat.closed~#netBadge{bottom:58px}
+/* overlays */
+.ov{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 30%,rgba(60,30,15,.92),rgba(10,7,5,.97));z-index:5;overflow:auto;padding:20px}
+.card{background:#16120e;border:1px solid #3a2e22;border-radius:16px;padding:24px;max-width:560px;width:100%}
+.card h1{margin:0 0 6px;font-size:28px}
+.card p{color:var(--muted);margin:0 0 14px}
+.field{margin-bottom:13px}.field>label{display:block;font-size:13px;color:var(--muted);margin-bottom:5px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}.seg button{flex:1}.seg button.on{background:var(--gold);color:#1f1603;border-color:var(--gold);font-weight:700}
+.chk{display:flex;gap:16px;font-size:13px;color:var(--text)}
+.chk label{display:flex;gap:6px;align-items:center;cursor:pointer}
+#cpuList{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+#cpuList div{display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.05);padding:5px 10px;border-radius:8px}
+#wrPlayers div{display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(255,255,255,.05);border-radius:8px;margin-bottom:6px}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:10;padding:16px}
+.mbox{background:#16120e;border:1px solid #3a2e22;border-radius:14px;padding:22px;max-width:640px;width:100%;max-height:90vh;overflow:auto}
+.mbox h2{margin:0 0 8px}.mbox p,.mbox li{color:var(--muted)}
+.row2{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center}
+.copied{color:var(--green);font-size:13px}
+table.st{border-collapse:collapse;width:100%;font-size:13px}
+table.st td,table.st th{padding:5px 8px;border-bottom:1px solid #2c241b;text-align:center}
+table.st td:first-child,table.st th:first-child{text-align:left}
+#toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#2b1416;border:1px solid var(--red);color:#fff;padding:8px 14px;border-radius:10px;z-index:20;opacity:0;transition:opacity .2s;pointer-events:none}
+#toast.show{opacity:1}
+</style>
+</head>
+<body>
+<canvas id="view"></canvas>
+<svg id="cross" viewBox="0 0 34 34" hidden><circle cx="17" cy="17" r="9" fill="none" stroke="#fff" stroke-width="1.6"/><circle cx="17" cy="17" r="9" fill="none" stroke="#000" stroke-width="0.6" stroke-dasharray="2 2"/><path d="M17 2v9M17 23v9M2 17h9M23 17h9" stroke="#fff" stroke-width="1.6"/><circle cx="17" cy="17" r="1.6" fill="#ff3b30"/></svg>
+<div id="hud" hidden>
+  <div id="info" class="panel"><div class="t" id="gTitle">501</div><div class="s" id="gSub"></div>
+    <div class="row"><button id="modeBtn">Throw: Flick</button><button id="inviteBtn">📨 Invite</button><button id="statsBtn">Stats</button><button id="helpBtn">?</button><button id="soundBtn">🔊</button></div></div>
+  <div id="score" class="panel"></div>
+  <div id="waitBar" class="panel" hidden></div>
+  <div id="visit" class="panel">
+    <div class="slot" id="s0"><b>–</b><span>Dart 1</span></div><div class="slot" id="s1"><b>–</b><span>Dart 2</span></div><div class="slot" id="s2"><b>–</b><span>Dart 3</span></div>
+    <div id="vstat"><div class="a" id="vA"></div><div class="b" id="vB"></div></div>
+  </div>
+  <div id="meterBox" class="panel" hidden><canvas id="meter" width="300" height="22"></canvas><span class="s" id="meterTxt" style="font-size:12px;color:var(--muted)">Click again when the marker is in the middle</span></div>
+  <div id="flickMsg"></div>
+  <div id="banner"></div>
+  <div id="chat" class="panel closed"><div id="chatHead"><span>💬 Chat <span id="unread"></span></span><span id="chatToggle">▴</span></div>
+    <div id="chatBody"><div id="chatLog"></div><form id="chatForm" autocomplete="off"><input type="text" id="chatIn" maxlength="300" placeholder="Say something… (Enter)"><button class="primary">Send</button></form></div></div>
+  <div id="netBadge"></div>
+</div>
+
+<div id="lobby" class="ov" hidden>
+  <div class="card">
+    <h1>🎯 Oche Darts</h1>
+    <p>3D pub darts with friends. Play live together or take your turn whenever you're free. No sign-in.</p>
+    <div class="field"><label for="nameIn">Your name</label><input type="text" id="nameIn" maxlength="16" placeholder="e.g. John"></div>
+    <div class="field"><label>Game</label><div class="seg" id="modeSeg"><button data-v="501" class="on">501</button><button data-v="301">301</button><button data-v="cricket">Cricket</button></div></div>
+    <div class="field" id="x01Opts"><label>Rules</label><div class="chk"><label><input type="checkbox" id="dout" checked> Double out</label><label><input type="checkbox" id="din"> Double in</label></div></div>
+    <div class="field"><label>Match length</label><div class="seg" id="legSeg"><button data-v="1" class="on">1 leg</button><button data-v="3">Best of 3</button><button data-v="5">Best of 5</button></div></div>
+    <div class="field"><label>Computer opponents (optional)</label><div class="seg" id="cpuAdd"><button data-v="easy">+ Easy</button><button data-v="medium">+ Medium</button><button data-v="pro">+ Pro</button></div><div id="cpuList"></div></div>
+    <button class="primary" id="createBtn" style="width:100%;padding:11px">Create game &amp; get invite link</button>
+    <div id="recent" style="margin-top:14px"></div>
+  </div>
+</div>
+<div id="room" class="ov" hidden>
+  <div class="card">
+    <h1 id="wrTitle">Waiting room</h1>
+    <p id="wrSub"></p>
+    <div id="wrPlayers"></div>
+    <div class="row2"><button id="wrInvite">📨 Copy invite link</button><span class="copied" id="wrCopied"></span><span style="flex:1"></span><button class="primary" id="wrStart">Start game ▶</button></div>
+    <p id="wrNote" style="margin-top:12px;font-size:13px"></p>
+  </div>
+</div>
+<div id="modal" hidden><div class="mbox" id="mbox"></div></div>
+<div id="toast"></div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
