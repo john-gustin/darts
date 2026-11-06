@@ -2,7 +2,7 @@ import * as THREE from '../lib/three.module.min.js';
 import {hitAt,targetPoint,checkout,compute,CRICKET,ORDER,R,fmtMarks} from './engine.js';
 import {Net} from './net.js';
 
-const APP_VERSION=1;
+const APP_VERSION=2;
 const COL=['#4fa3ff','#ff8f3d','#43d17a','#d36bff'];
 const CPU_SIGMA={easy:30,medium:17,pro:9};
 const $=s=>document.querySelector(s);
@@ -340,7 +340,7 @@ function render(){
   else wb.hidden=true;
   // board darts
   setBoardDarts(st.onBoard.map(h=>({...h})),pidAt(st.turn));
-  $('#cross').hidden=true;
+  $('#cross').style.display='none';
   cpuTick();
 }
 
@@ -355,9 +355,9 @@ function frame(now){
     let p=thr.s==='idle'?mouseToMM():thr.aim;
     const w=wobble(now/1000,mode==='flick'?7:2.5);p=[p[0]+w[0],p[1]+w[1]];aimMM=p;
     tmpV.set(p[0]/1000,p[1]/1000,0.005).project(camera);
-    cross.hidden=false;cross.style.left=((tmpV.x+1)/2*window.innerWidth)+'px';cross.style.top=((1-tmpV.y)/2*window.innerHeight)+'px';
-    canvas.style.cursor='none';
-  } else {cross.hidden=true;canvas.style.cursor='default';}
+    cross.style.display='block';cross.style.left=((tmpV.x+1)/2*window.innerWidth)+'px';cross.style.top=((1-tmpV.y)/2*window.innerHeight)+'px';
+    canvas.style.cursor='crosshair';
+  } else {cross.style.display='none';canvas.style.cursor='default';}
   if(thr.s==='meter')drawMeter();
   renderer.render(scene,camera);
   requestAnimationFrame(frame);

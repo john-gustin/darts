@@ -22,7 +22,7 @@ button:hover:not(:disabled){background:rgba(255,255,255,.16)}
 button:disabled{opacity:.4;cursor:not-allowed}
 button.primary{background:var(--gold);color:#1f1603;border-color:var(--gold);font-weight:700}
 input[type=text],select{font:inherit;background:#0c0e11;color:var(--text);border:1px solid #3a3f46;border-radius:8px;padding:8px 11px;width:100%}
-#view{position:fixed;inset:0;width:100vw;height:100vh;display:block;cursor:none}
+#view{position:fixed;inset:0;width:100vw;height:100vh;display:block;cursor:default}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;backdrop-filter:blur(6px)}
 [hidden]{display:none!important}
 #hud>*{position:fixed}
@@ -60,7 +60,7 @@ table.cr th.up{color:var(--gold)}
 #modeBtn{font-size:12px}
 #meterBox{left:50%;bottom:96px;transform:translateX(-50%);padding:8px 12px;display:flex;flex-direction:column;align-items:center;gap:4px}
 #meterBox canvas{display:block}
-#cross{position:fixed;width:34px;height:34px;margin:-17px 0 0 -17px;pointer-events:none;z-index:3}
+#cross{position:fixed;width:44px;height:44px;margin:-22px 0 0 -22px;pointer-events:none;z-index:3;filter:drop-shadow(0 0 2px rgba(0,0,0,.9))}
 #flickMsg{left:50%;top:18%;transform:translateX(-50%);font-weight:800;font-size:18px;text-shadow:0 2px 8px #000;pointer-events:none;opacity:0;transition:opacity .3s}
 #flickMsg.show{opacity:1}
 #banner{left:50%;top:40%;transform:translate(-50%,-50%);font-size:64px;font-weight:900;text-shadow:0 6px 24px rgba(0,0,0,.8);pointer-events:none;opacity:0;transition:opacity .35s;text-align:center;white-space:nowrap}
@@ -104,7 +104,7 @@ table.st td:first-child,table.st th:first-child{text-align:left}
 </head>
 <body>
 <canvas id="view"></canvas>
-<svg id="cross" viewBox="0 0 34 34" hidden><circle cx="17" cy="17" r="9" fill="none" stroke="#fff" stroke-width="1.6"/><circle cx="17" cy="17" r="9" fill="none" stroke="#000" stroke-width="0.6" stroke-dasharray="2 2"/><path d="M17 2v9M17 23v9M2 17h9M23 17h9" stroke="#fff" stroke-width="1.6"/><circle cx="17" cy="17" r="1.6" fill="#ff3b30"/></svg>
+<svg id="cross" viewBox="0 0 34 34" style="display:none"><circle cx="17" cy="17" r="9" fill="none" stroke="#fff" stroke-width="1.6"/><circle cx="17" cy="17" r="9" fill="none" stroke="#000" stroke-width="0.6" stroke-dasharray="2 2"/><path d="M17 2v9M17 23v9M2 17h9M23 17h9" stroke="#fff" stroke-width="1.6"/><circle cx="17" cy="17" r="1.6" fill="#ff3b30"/></svg>
 <div id="hud" hidden>
   <div id="info" class="panel"><div class="t" id="gTitle">501</div><div class="s" id="gSub"></div>
     <div class="row"><button id="modeBtn">Throw: Flick</button><button id="inviteBtn">📨 Invite</button><button id="statsBtn">Stats</button><button id="helpBtn">?</button><button id="soundBtn">🔊</button></div></div>
